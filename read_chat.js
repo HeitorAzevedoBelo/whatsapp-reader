@@ -1,13 +1,5 @@
-// read_chat.js
-// Este script lê o arquivo "./midia/text/chat.txt" exportado do WhatsApp,
-// remove caracteres invisíveis (U+200E) de cada linha e processa os novos formatos:
-// - Mensagens do tipo poll (enquete)
-// - Anexos no novo formato (<anexado: arquivo.ext>)
-// - Novo tipo: audio (arquivos .opus)
-// Mantém os tipos text, image, sticker, pdf, video, notification e adiciona poll, audio.
-// O JSON resultante é salvo em "./midia/text/chat.json".
-
 const fs = require('fs');
+const path = require('path');
 
 function isNewMessage(line) {
   line = line.trim();
@@ -23,7 +15,7 @@ function extractDateHour(datetime) {
   const date = parts[0];
   let hour = parts[1] || "";
   if (hour.length >= 5) {
-    hour = hour.substring(0, 5); // mantém somente hh:mm
+    hour = hour.substring(0, 5);
   }
   return { date, hour };
 }
@@ -71,16 +63,21 @@ function determineMessageTypeOld(content) {
   return "text";
 }
 
-function processChatFile(inputFile, outputFile) {
+function processChatFile(inputFile, outputDir, chatName) {
   try {
     const rawData = fs.readFileSync(inputFile, 'utf8');
     let lines = rawData.split(/\r?\n/).map(line => line.replace(/\u200E/g, "").trim());
     const messages = [];
+
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+
     for (let i = 0; i < lines.length; i++) {
       let line = lines[i];
       if (!line) continue;
       if (!isNewMessage(line)) continue;
-      
+
       let { datetime, messageStr } = parseInitialLine(line);
       let { date, hour } = extractDateHour(datetime);
       let parsed = parseMessageContent(messageStr);
@@ -93,13 +90,10 @@ function processChatFile(inputFile, outputFile) {
         description: ""
       };
 
-      // Se o sender iniciar com "[" (ex.: "[Insira nome aqui] - Nasa 2025"),
-      // então trata-se de uma notificação.
       if (message.sender && message.sender.startsWith("[")) {
         message.type = "notification";
       }
 
-      // Novo tipo: poll (enquete)
       if (message.content.trim().toUpperCase().startsWith("ENQUETE:")) {
         message.type = "poll";
         let poll = { question: "", options: [] };
@@ -129,11 +123,13 @@ function processChatFile(inputFile, outputFile) {
         }
         message.content = poll;
       }
-      // Novo formato de anexos: <anexado: arquivo.ext>
       else if (message.content.trim().startsWith("<anexado:")) {
         let extracted = message.content.trim();
         extracted = extracted.substring("<anexado:".length, extracted.length - 1).trim();
-        message.content = extracted;
+
+        // Prepend chatName folder to content to reflect media path
+        message.content = path.join(chatName, extracted).replace(/\\/g, '/');
+
         if (/\.(webp)$/i.test(extracted)) {
           message.type = "sticker";
         } else if (/\.(jpg|png)$/i.test(extracted)) {
@@ -153,18 +149,25 @@ function processChatFile(inputFile, outputFile) {
           i++;
         }
       }
-      // Formato legado com "(arquivo anexado)"
       else if (message.content.includes("(arquivo anexado)")) {
         message.type = determineMessageTypeOld(message.content);
         message.content = cleanContent(message.content);
+
+        // Prepend chatName folder to content if media type
+        if (message.type !== "text") {
+          message.content = path.join(chatName, message.content).replace(/\\/g, '/');
+        }
+
         if (i + 1 < lines.length && !isNewMessage(lines[i + 1]) && lines[i + 1] !== "") {
           message.description = lines[i + 1].trim();
           i++;
         }
       }
-      
+
       messages.push(message);
     }
+
+    const outputFile = path.join(outputDir, 'chat.json');
     const outputData = { messages };
     fs.writeFileSync(outputFile, JSON.stringify(outputData, null, 2));
     console.log("Arquivo JSON criado com sucesso:", outputFile);
@@ -174,9 +177,16 @@ function processChatFile(inputFile, outputFile) {
 }
 
 function main() {
+  const chatName = process.argv[2];
+  if (!chatName) {
+    console.error("Por favor, informe o nome do chat como argumento. Exemplo: node read_chat.js chat1");
+    process.exit(1);
+  }
+
   const inputFile = './midia/text/chat.txt';
-  const outputFile = './midia/text/chat.json';
-  processChatFile(inputFile, outputFile);
+  const outputDir = `./midia/text/${chatName}`;
+
+  processChatFile(inputFile, outputDir, chatName);
 }
 
 main();
