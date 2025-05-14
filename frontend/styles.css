@@ -1,212 +1,422 @@
-/* Tema escuro com boa legibilidade */
+/* Reset básico */
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   background-color: #121212;
-  color: #e0e0e0;
-  font-family: Arial, sans-serif;
-}
-
-.chat-container {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
+  color: #ddd;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   height: 100vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
+.layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  user-select: none;
+  position: relative;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 250px;
+  background-color: #1f1f1f;
+  border-right: 1px solid #333;
+  padding: 20px 15px;
+  overflow-y: auto;
+  flex-shrink: 0; /* Evita que a sidebar encolha */
+  position: relative;
+  z-index: 10; /* Garante que fique acima do chat se necessário */
+}
+
+.sidebar h2 {
+  margin: 0 0 15px;
+  font-weight: 700;
+  color: #64b5f6;
+  letter-spacing: 0.05em;
+}
+
+.chat-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex-grow: 1;
+}
+
+.chat-list li {
+  padding: 12px 15px;
+  margin-bottom: 8px;
+  border-radius: 20px;
+  cursor: pointer;
+  background-color: #2a2a2a;
+  color: #ccc;
+  font-weight: 600;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+.chat-list li:hover,
+.chat-list li.active {
+  background-color: #64b5f6;
+  color: #121212;
+  font-weight: 700;
+  box-shadow: 0 0 10px #64b5f6;
+}
+
+/* Chat container */
+.chat-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: #181818;
+  padding: 20px 25px;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+/* Chat area */
 .chat {
   flex: 1;
   overflow-y: auto;
   padding-right: 10px;
-}
-
-/* Cabeçalho para datas */
-.date-header {
-  text-align: center;
-  margin: 15px 0;
-  font-size: 0.9em;
-  color: #a0a0a0;
-}
-
-/* Container de mensagem */
-.message {
-  margin-bottom: 10px;
+  scroll-behavior: smooth;
   display: flex;
   flex-direction: column;
 }
 
-/* Remetente */
-.sender {
-  font-weight: bold;
-  margin-bottom: 3px;
-}
-
-/* Bolha de mensagem */
-.bubble {
-  background-color: #1e1e1e;
-  padding: 10px 15px;
-  border-radius: 10px;
-  max-width: 70%;
-  position: relative;
-  word-wrap: break-word;
-}
-
-/* Horário */
-.time {
-  position: absolute;
-  bottom: 5px;
-  right: 10px;
-  font-size: 0.7em;
-  color: rgba(224,224,224,0.6);
+/* Data header */
+.date-header {
+  text-align: center;
+  margin: 25px 0 15px;
+  font-size: 0.9em;
+  color: #888;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 600;
 }
 
 /* Notificação */
 .notification {
   text-align: center;
-  margin: 10px 0;
+  margin: 15px 0;
   font-style: italic;
-  background-color: #2a2a2a;
-  padding: 5px 10px;
-  border-radius: 5px;
+  background-color: #2f2f2f;
+  padding: 8px 15px;
+  border-radius: 15px;
+  color: #aaa;
+  font-size: 0.85em;
+  max-width: 60%;
+  align-self: center;
 }
 
-/* Sticker */
-.bubble.sticker {
-  display: inline-block;
-  padding: 5px;
-  background-color: transparent;
-  border: none;
-}
-.bubble.sticker img {
-  width: 80px;
-  height: 80px;
-  object-fit: contain;
+/* Mensagem */
+.message {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 14px;
+  max-width: 70%;
+  position: relative;
+  word-wrap: break-word;
+  /* Alinhamento será setado via JS adicionando classe 'mine' ou 'others' */
 }
 
-/* Imagem */
-.bubble.image img {
-  max-width: 300px;
+/* Remetente (nome) */
+.sender {
+  font-weight: 700;
+  font-size: 0.85em;
+  margin-bottom: 5px;
+  color: #81d4fa;
+  user-select: text;
+}
+
+/* Bolha de mensagem */
+.bubble {
+  position: relative;
+  padding: 12px 50px 12px 18px; /* Espaço extra à direita para horário */
+  border-radius: 20px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+  font-size: 0.95em;
+  line-height: 1.3em;
+  max-width: 100%;
+  color: #f0f0f0;
+  background-color: #323232;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  box-sizing: border-box;
+}
+
+/* Horário dentro do balão */
+.time {
+  position: absolute;
+  bottom: 6px;
+  right: 18px; /* Mesmo padding direito */
+  font-size: 0.65em;
+  color: rgba(240, 240, 240, 0.45);
+  user-select: none;
+  pointer-events: none;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* Alinhamento para mensagens do usuário (direita) */
+.message.mine {
+  align-self: flex-end;
+  max-width: 65%;
+}
+
+.message.mine .bubble {
+  background-color: #1976d2;
+  color: #e3f2fd;
+  padding: 12px 50px 12px 18px;
+  border-bottom-right-radius: 4px;
+  border-bottom-left-radius: 20px;
+  border-top-right-radius: 20px;
+  border-top-left-radius: 20px;
+}
+
+.message.mine .time {
+  color: rgba(227, 242, 253, 0.55);
+}
+
+/* Alinhamento para mensagens dos outros (esquerda) */
+.message.others {
+  align-self: flex-start;
+  max-width: 70%;
+}
+
+.message.others .bubble {
+  background-color: #424242;
+  color: #ddd;
+  padding: 12px 50px 12px 18px;
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 20px;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+}
+
+.message.others .time {
+  color: rgba(221, 221, 221, 0.45);
+}
+
+/* Imagens e mídia */
+.bubble.sticker,
+.bubble.image,
+.bubble.video {
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 15px;
+}
+
+.bubble.sticker img,
+.bubble.image img,
+.bubble.video video {
+  display: block;
+  max-width: 280px;
   height: auto;
-  border-radius: 8px;
+  border-radius: 15px;
+  user-select: none;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.bubble.sticker img:hover,
+.bubble.image img:hover,
+.bubble.video video:hover {
+  transform: scale(1.05);
+}
+
+/* Descrição da mídia */
+.description {
+  font-size: 0.8em;
+  color: #aaa;
+  margin-top: 5px;
+  user-select: text;
 }
 
 /* PDF */
 .bubble.pdf {
   display: flex;
   align-items: center;
-  background-color: #2a2a2a;
-  padding: 10px;
-  border-radius: 8px;
+  background-color: #2f2f2f;
+  padding: 10px 15px;
+  border-radius: 15px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
 }
+
 .bubble.pdf .icon {
-  font-size: 2em;
-  margin-right: 10px;
+  font-size: 1.8em;
+  margin-right: 15px;
+  user-select: none;
 }
+
 .bubble.pdf .file-info {
   display: flex;
   flex-direction: column;
 }
 
-/* Vídeo */
-.bubble.video video {
-  max-width: 300px;
-  height: auto;
-  border-radius: 8px;
+.bubble.pdf button {
+  margin-top: 8px;
+  padding: 6px 10px;
+  background-color: #1976d2;
+  color: #e3f2fd;
+  border: none;
+  border-radius: 15px;
+  cursor: pointer;
+  font-weight: 700;
+  transition: background-color 0.3s ease;
+}
+
+.bubble.pdf button:hover {
+  background-color: #1565c0;
 }
 
 /* Áudio */
 .bubble.audio {
-  background-color: #1e1e1e;
-  padding: 10px;
-  border-radius: 10px;
-  max-width: 300px;
+  background-color: #323232;
+  padding: 10px 14px;
+  border-radius: 20px;
+  max-width: 280px;
   display: flex;
   align-items: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
 }
+
 .audio-player {
   display: flex;
   align-items: center;
   width: 100%;
 }
+
 .audio-player button {
   background: none;
   border: none;
-  color: #e0e0e0;
-  font-size: 1em;
+  color: #bbdefb;
+  font-size: 1.1em;
   cursor: pointer;
-  margin-right: 10px;
+  margin-right: 12px;
+  transition: color 0.25s ease;
 }
+
+.audio-player button:hover {
+  color: #e3f2fd;
+}
+
 .audio-player .progress-container {
   flex: 1;
   background-color: #2a2a2a;
   border-radius: 5px;
   overflow: hidden;
-  height: 5px;
-  margin-right: 10px;
+  height: 6px;
+  margin-right: 12px;
+  cursor: pointer;
 }
+
 .audio-player .progress {
-  background-color: #4caf50;
+  background-color: #64b5f6;
   height: 100%;
   width: 0%;
+  transition: width 0.2s ease;
 }
+
 .audio-player .duration {
-  font-size: 0.8em;
-  color: rgba(224,224,224,0.8);
+  font-size: 0.85em;
+  color: rgba(187, 222, 251, 0.8);
+  min-width: 40px;
+  text-align: right;
+  user-select: none;
 }
 
 /* Poll */
 .bubble.poll {
-  background-color: #1e1e1e;
-  padding: 15px;
-  border-radius: 10px;
+  background-color: #2b2b2b;
+  padding: 18px 20px;
+  border-radius: 20px;
   max-width: 90%;
-  border: 1px solid #4a4a4a;
+  border: 1.5px solid #64b5f6;
+  box-shadow: 0 0 10px #64b5f6aa;
 }
+
 .poll-question {
-  font-weight: bold;
-  margin-bottom: 10px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: #81d4fa;
+  font-size: 1.05em;
 }
+
 .poll-options {
   display: flex;
   flex-direction: column;
+  gap: 10px;
 }
+
 .poll-option {
-  padding: 8px;
-  margin-bottom: 8px;
-  background-color: #2a2a2a;
-  border-radius: 5px;
   position: relative;
+  padding: 12px 16px;
+  background-color: #3a3a3a;
+  border-radius: 15px;
   overflow: hidden;
+  color: #ddd;
+  user-select: none;
 }
+
 .poll-option .option-text {
   position: relative;
   z-index: 2;
+  font-weight: 600;
 }
+
 .poll-option .option-bar {
   position: absolute;
   top: 0;
   left: 0;
   height: 100%;
-  background-color: rgba(76,175,80,0.5);
+  background-color: rgba(100, 181, 246, 0.6);
   z-index: 1;
+  transition: width 0.3s ease;
 }
 
 /* Links */
 .bubble a {
-  color: blue;
+  color: #64b5f6;
   text-decoration: underline;
+  word-break: break-word;
+}
+
+.bubble a:hover {
+  color: #90caf9;
+  text-decoration: none;
 }
 
 /* Responsividade */
 @media (max-width: 600px) {
-  .bubble.image img,
-  .bubble.video video,
-  .bubble.audio {
-    max-width: 80%;
+  .sidebar {
+    width: 60px;
+    padding: 15px 10px;
   }
-  .bubble {
+  .sidebar h2 {
+    display: none;
+  }
+  .chat-list li {
+    padding: 10px;
+    font-size: 0.85em;
+    text-align: center;
+    border-radius: 12px;
+  }
+  .chat {
+    padding: 15px 10px 10px 10px;
+  }
+  .message {
     max-width: 90%;
+  }
+  .bubble.sticker img,
+  .bubble.image img,
+  .bubble.video video {
+    max-width: 90vw;
   }
 }

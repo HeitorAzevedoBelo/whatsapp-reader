@@ -1,16 +1,50 @@
-// script.js
-
 document.addEventListener('DOMContentLoaded', () => {
-  fetch('../midia/text/chat.json')
-    .then(response => response.json())
-    .then(data => renderChat(data))
-    .catch(error => console.error('Erro ao carregar o chat.json:', error));
+  const chatList = ['vai-bate', 'lav']; // Simulação, pode ser substituído por uma requisição depois
+  const listContainer = document.getElementById('chat-list');
+
+  chatList.forEach(chatName => {
+    const li = document.createElement('li');
+    li.textContent = chatName;
+    li.addEventListener('click', () => {
+      setActiveChat(chatName);
+      loadChat(chatName);
+    });
+    listContainer.appendChild(li);
+  });
+
+  if (chatList.length > 0) {
+    setActiveChat(chatList[0]);
+    loadChat(chatList[0]);
+  }
 });
 
-function renderChat(data) {
+function setActiveChat(chatName) {
+  const chatItems = document.querySelectorAll('#chat-list li');
+  chatItems.forEach(li => {
+    if (li.textContent === chatName) {
+      li.classList.add('active');
+    } else {
+      li.classList.remove('active');
+    }
+  });
+}
+
+function loadChat(chatName) {
+  fetch(`../midia/text/${chatName}/chat.json`)
+    .then(response => response.json())
+    .then(data => renderChat(data, chatName))
+    .catch(error => console.error('Erro ao carregar o chat:', error));
+}
+
+function renderChat(data, chatName) {
   const chatContainer = document.getElementById('chat');
+  chatContainer.innerHTML = "";
   let currentDate = null;
   let previousSender = null;
+
+  // Escolhe aleatoriamente um remetente para alinhar as mensagens à direita
+  const senders = Array.from(new Set(data.messages.filter(m => m.sender).map(m => m.sender)));
+  const mineSender = senders.length > 0 ? senders[Math.floor(Math.random() * senders.length)] : null;
 
   data.messages.forEach((message) => {
     if (message.date !== currentDate) {
@@ -34,6 +68,14 @@ function renderChat(data) {
     const messageElement = document.createElement('div');
     messageElement.classList.add('message');
 
+    // Definindo classe para alinhamento
+    if (message.sender === mineSender) {
+      messageElement.classList.add('mine');
+    } else {
+      messageElement.classList.add('others');
+    }
+
+    // Mostrar sender só se mudou ou é diferente de null
     let showSender = true;
     if (previousSender && message.sender === previousSender) {
       showSender = false;
@@ -47,7 +89,7 @@ function renderChat(data) {
 
     const bubble = document.createElement('div');
     bubble.classList.add('bubble', message.type);
-    const mediaPathPrefix = "../midia/external/";
+    const mediaPathPrefix = `../midia/external/${chatName}/`;
 
     if (message.type === 'text') {
       if (isValidUrl(message.content)) {
@@ -61,7 +103,7 @@ function renderChat(data) {
       }
     } else if (message.type === 'sticker') {
       const img = document.createElement('img');
-      img.src = mediaPathPrefix + message.content;
+      img.src = mediaPathPrefix + getFileName(message.content);
       img.alt = 'Sticker';
       bubble.appendChild(img);
       bubble.style.display = "inline-block";
@@ -70,7 +112,7 @@ function renderChat(data) {
       bubble.style.border = "none";
     } else if (message.type === 'image') {
       const img = document.createElement('img');
-      img.src = mediaPathPrefix + message.content;
+      img.src = mediaPathPrefix + getFileName(message.content);
       img.alt = 'Imagem';
       bubble.appendChild(img);
       if (message.description) {
@@ -87,12 +129,12 @@ function renderChat(data) {
       const fileInfo = document.createElement('div');
       fileInfo.classList.add('file-info');
       const fileName = document.createElement('div');
-      fileName.textContent = message.content;
+      fileName.textContent = getFileName(message.content);
       fileInfo.appendChild(fileName);
       const downloadButton = document.createElement('button');
       downloadButton.textContent = 'Download';
       downloadButton.addEventListener('click', () => {
-        window.open(mediaPathPrefix + message.content, '_blank');
+        window.open(mediaPathPrefix + getFileName(message.content), '_blank');
       });
       fileInfo.appendChild(downloadButton);
       bubble.appendChild(fileInfo);
@@ -104,7 +146,7 @@ function renderChat(data) {
       }
     } else if (message.type === 'video') {
       const video = document.createElement('video');
-      video.src = mediaPathPrefix + message.content;
+      video.src = mediaPathPrefix + getFileName(message.content);
       video.controls = true;
       bubble.appendChild(video);
       if (message.description) {
@@ -114,12 +156,11 @@ function renderChat(data) {
         bubble.appendChild(desc);
       }
     } else if (message.type === 'audio') {
-      // Cria player de áudio customizado
       const audioContainer = document.createElement('div');
       audioContainer.classList.add('audio-player');
 
       const audio = document.createElement('audio');
-      audio.src = mediaPathPrefix + message.content;
+      audio.src = mediaPathPrefix + getFileName(message.content);
       audio.preload = 'metadata';
 
       const playButton = document.createElement('button');
@@ -172,7 +213,6 @@ function renderChat(data) {
       audioContainer.appendChild(durationSpan);
       bubble.appendChild(audioContainer);
     } else if (message.type === 'poll') {
-      // Renderização aprimorada da enquete (poll)
       const pollContainer = document.createElement('div');
       pollContainer.classList.add('poll');
       const question = document.createElement('div');
@@ -181,47 +221,49 @@ function renderChat(data) {
       pollContainer.appendChild(question);
       const optionsList = document.createElement('div');
       optionsList.classList.add('poll-options');
-      
-      // Calcula votos totais para barra de progresso
+
       let totalVotes = 0;
       message.content.options.forEach(option => {
         totalVotes += option.votes;
       });
-      
+
       message.content.options.forEach(option => {
         const optionDiv = document.createElement('div');
         optionDiv.classList.add('poll-option');
-        
+
         const optionText = document.createElement('div');
         optionText.classList.add('option-text');
         optionText.textContent = `${option.text} (${option.votes} votos)`;
         optionDiv.appendChild(optionText);
-        
-        // Barra de progresso
+
         const optionBar = document.createElement('div');
         optionBar.classList.add('option-bar');
         let percent = totalVotes > 0 ? (option.votes / totalVotes) * 100 : 0;
         optionBar.style.width = percent + "%";
         optionDiv.appendChild(optionBar);
-        
+
         optionsList.appendChild(optionDiv);
       });
-      
+
       pollContainer.appendChild(optionsList);
       bubble.appendChild(pollContainer);
     }
-    
+
     const timeSpan = document.createElement('span');
     timeSpan.classList.add('time');
     timeSpan.textContent = message.hour;
     bubble.appendChild(timeSpan);
-    
+
     messageElement.appendChild(bubble);
     chatContainer.appendChild(messageElement);
     previousSender = message.sender;
   });
-  
-  chatContainer.scrollTop = chatContainer.scrollHeight;
+
+  // Scroll suave para o fim após renderizar
+  chatContainer.scrollTo({
+    top: chatContainer.scrollHeight,
+    behavior: 'smooth'
+  });
 }
 
 function formatDate(dateStr) {
@@ -242,4 +284,8 @@ function isValidUrl(string) {
   } catch (err) {
     return false;
   }
+}
+
+function getFileName(path) {
+  return path.split('/').pop();
 }
